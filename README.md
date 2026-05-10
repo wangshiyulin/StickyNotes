@@ -1,16 +1,33 @@
-# StickyNotes
+StickyNotes — Simple pinned sticky notes
+================================
 
-A tiny (~1.8 MB) always-on-top sticky-notes app for Windows, built with Tauri + Rust.
+Quick Start
+--------
+1. Extract all files to any directory.
+2. Double-click StickyNotes.exe to run it (on the first launch of Windows, you may be prompted that WebView2 is required).
+Included in Windows 10/11; please install if missing:
+(https://developer.microsoft.com/microsoft-edge/webview2/)
 
-## Features
-- Always-on-top window, light/dark theme
-- Local JSON storage with user-selectable directory
-- Backup / export / import (merge or replace)
-- Custom window size, remembered position
-- On window close: minimize to background or quit
+Main functions
+--------
+- Pinned to the top of all windows for quick note-taking
+- Light/Dark Theme
+- Save the notebook as JSON, with customizable storage location.
+- Supports local backup, export, and import (merge/overwrite)
+- Customize window size, remember window position
+- To close the window, you can choose to "minimize to background" or "close the program".
 
-## License
-MIT
+Data location
+--------
+- Note data: Default is %USERPROFILE%\StickyNotes\notes.json, which can be modified in "Settings → Note Location".
+- Configuration file: %APPDATA%\StickyNotes\config.json
+
+source code
+------
+This compressed package also contains the complete source code (src-tauri/, dist/).
+Built on Tauri 1.6 + Rust, it's a single executable file of only ~1.8 MB.
+
+License: MIT
 
 
 
