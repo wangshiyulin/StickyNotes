@@ -9,22 +9,6 @@ A tiny (~1.8 MB) always-on-top sticky-notes app for Windows, built with Tauri + 
 - Custom window size, remembered position
 - On window close: minimize to background or quit
 
-## Build
-Requires Rust toolchain. On Linux/macOS use [cargo-xwin](https://github.com/rust-cross/cargo-xwin) to cross-compile:
-
-```bash
-cd src-tauri
-cargo xwin build --release --target x86_64-pc-windows-msvc
-```
-
-On Windows:
-```bash
-cd src-tauri
-cargo build --release
-```
-
-The executable lands in `src-tauri/target/<triple>/release/stickynotes.exe`.
-
 ## License
 MIT
 
@@ -59,10 +43,5 @@ StickyNotes — 简约置顶便签
 ------
 本压缩包同时包含完整源代码（src-tauri/、dist/）。
 基于 Tauri 1.6 + Rust 构建，仅 ~1.8 MB 单文件可执行。
-
-从源码构建（需 Rust + Windows 工具链或 cargo-xwin）：
-
-    cd src-tauri
-    cargo build --release --target x86_64-pc-windows-msvc
 
 License: MIT
