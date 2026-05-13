@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{api::dialog::blocking::FileDialogBuilder, Manager, State, Window, WindowEvent};
+use tauri::{
+    api::dialog::blocking::FileDialogBuilder, CustomMenuItem, Manager, State, SystemTray,
+    SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem, Window, WindowEvent,
+};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Bounds { width: f64, height: f64, x: Option<f64>, y: Option<f64> }
@@ -17,6 +20,8 @@ struct Config {
     bounds: Bounds,
     #[serde(default = "default_close_action")]
     close_action: String, // "minimize" | "close"
+    #[serde(default)]
+    autostart: bool,
 }
 
 fn default_close_action() -> String { "minimize".into() }
@@ -30,6 +35,7 @@ impl Default for Config {
             always_on_top: true,
             bounds: Bounds { width: 420.0, height: 540.0, x: None, y: None },
             close_action: "minimize".into(),
+            autostart: false,
         }
     }
 }
@@ -74,6 +80,27 @@ fn write_notes(cfg: &Config, notes: &serde_json::Value) -> Result<(), String> {
     fs::write(notes_file(cfg), s).map_err(|e| e.to_string())
 }
 
+#[cfg(windows)]
+fn apply_autostart(enable: bool) -> Result<(), String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let (key, _) = hkcu
+        .create_subkey(r"Software\Microsoft\Windows\CurrentVersion\Run")
+        .map_err(|e| e.to_string())?;
+    if enable {
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let path = format!("\"{}\"", exe.to_string_lossy());
+        key.set_value("StickyNotes", &path).map_err(|e| e.to_string())?;
+    } else {
+        let _ = key.delete_value("StickyNotes");
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn apply_autostart(_enable: bool) -> Result<(), String> { Ok(()) }
+
 #[tauri::command]
 fn get_config(state: State<AppState>) -> Config { state.cfg.lock().unwrap().clone() }
 
@@ -110,6 +137,15 @@ fn set_close_action(state: State<AppState>, action: String) -> String {
     c.close_action = if action == "close" { "close".into() } else { "minimize".into() };
     write_config(&c, &state.cfg_path);
     c.close_action.clone()
+}
+
+#[tauri::command]
+fn set_autostart(state: State<AppState>, enable: bool) -> Result<bool, String> {
+    apply_autostart(enable)?;
+    let mut c = state.cfg.lock().unwrap();
+    c.autostart = enable;
+    write_config(&c, &state.cfg_path);
+    Ok(enable)
 }
 
 #[tauri::command]
@@ -188,26 +224,55 @@ fn save_bounds(state: State<AppState>, x: f64, y: f64, width: f64, height: f64) 
     write_config(&c, &state.cfg_path);
 }
 
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) { app.exit(0); }
+
 fn chrono_ts() -> u128 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0)
+}
+
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_window("main") {
+        let _ = w.unminimize();
+        let _ = w.show();
+        let _ = w.set_focus();
+    }
 }
 
 fn main() {
     let cfg = load_config();
     let cfg_path = config_path();
 
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(CustomMenuItem::new("show", "显示窗口"))
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(CustomMenuItem::new("quit", "退出"));
+    let tray = SystemTray::new().with_menu(tray_menu).with_tooltip("StickyNotes");
+
     tauri::Builder::default()
+        .system_tray(tray)
+        .on_system_tray_event(|app, event| match event {
+            SystemTrayEvent::LeftClick { .. } | SystemTrayEvent::DoubleClick { .. } => show_main(app),
+            SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+                "show" => show_main(app),
+                "quit" => app.exit(0),
+                _ => {}
+            },
+            _ => {}
+        })
         .setup(move |app| {
             let win = app.get_window("main").unwrap();
             let state = app.state::<AppState>();
             let cur = state.cfg.lock().unwrap().clone();
             let _ = win.set_always_on_top(cur.always_on_top);
-            use tauri::{LogicalSize, LogicalPosition};
+            use tauri::{LogicalPosition, LogicalSize};
             let _ = win.set_size(LogicalSize::new(cur.bounds.width, cur.bounds.height));
             if let (Some(x), Some(y)) = (cur.bounds.x, cur.bounds.y) {
                 let _ = win.set_position(LogicalPosition::new(x, y));
             }
+            // 同步自启状态到注册表（防止外部清除导致不一致）
+            let _ = apply_autostart(cur.autostart);
             Ok(())
         })
         .on_window_event(|event| {
@@ -217,15 +282,16 @@ fn main() {
                 let action = state.cfg.lock().unwrap().close_action.clone();
                 if action == "minimize" {
                     api.prevent_close();
-                    let _ = win.minimize();
+                    let _ = win.hide();
                 }
             }
         })
         .manage(AppState { cfg: Mutex::new(cfg), cfg_path })
         .invoke_handler(tauri::generate_handler![
             get_config, get_notes, save_notes, set_pin, set_theme,
-            set_close_action, set_window_size,
-            pick_storage_dir, export_notes, import_notes, backup_notes, save_bounds
+            set_close_action, set_autostart, set_window_size,
+            pick_storage_dir, export_notes, import_notes, backup_notes,
+            save_bounds, quit_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

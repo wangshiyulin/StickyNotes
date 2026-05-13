@@ -5,70 +5,153 @@
 <title>StickyNotes</title>
 <style>
   :root {
-    --bg: #fafaf9; --surface: #ffffff; --text: #1c1917; --muted: #78716c;
-    --border: #e7e5e4; --accent: #f59e0b; --accent-fg: #1c1917; --danger: #dc2626;
-    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+    --bg: #fafaf9; --surface: #ffffff; --text: #1c1917; --muted: #a8a29e;
+    --border: #ececea; --accent: #f59e0b; --accent-fg: #1c1917; --danger: #ef4444;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+    --shadow: 0 1px 2px rgba(0,0,0,.03), 0 4px 16px rgba(0,0,0,.04);
+    --c-yellow: #fef3c7; --c-pink: #fce7f3; --c-blue: #dbeafe; --c-green: #dcfce7;
+    --hover: rgba(0,0,0,.04);
   }
   html.dark {
     --bg: #18181b; --surface: #27272a; --text: #fafafa; --muted: #a1a1aa;
     --border: #3f3f46; --accent: #fbbf24; --accent-fg: #18181b; --danger: #f87171;
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+    --c-yellow: #78623a; --c-pink: #7a3a5a; --c-blue: #2c4a6e; --c-green: #2f5d3f;
+    --hover: rgba(255,255,255,.06);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
-  #app { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; }
   body {
-    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
           "Microsoft YaHei", sans-serif;
     color: var(--text); background: var(--bg);
     display: flex; flex-direction: column; height: 100vh; overflow: hidden;
     user-select: none;
+    -webkit-font-smoothing: antialiased;
   }
+  #app { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; }
   header {
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 4px;
     padding: 8px 10px; border-bottom: 1px solid var(--border);
-    -webkit-app-region: drag;
+    -webkit-app-region: drag; background: var(--surface);
   }
   header .spacer { flex: 1; }
+  header .title {
+    font-size: 12px; color: var(--muted); margin-left: 4px;
+    letter-spacing: .02em;
+  }
   .icon-btn, .btn {
     -webkit-app-region: no-drag;
-    background: var(--surface); color: var(--text);
-    border: 1px solid var(--border); border-radius: 7px;
-    padding: 5px 10px; font-size: 12px; cursor: pointer;
-    transition: background .15s, border-color .15s;
+    background: transparent; color: var(--text);
+    border: 1px solid transparent; border-radius: 6px;
+    padding: 5px 9px; font-size: 12px; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+    line-height: 1;
   }
-  .icon-btn { padding: 5px 8px; line-height: 1; }
-  .icon-btn:hover, .btn:hover { background: var(--bg); border-color: var(--muted); }
-  .btn-primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
-  .btn-primary:hover { background: var(--accent); opacity: .9; }
-  main { flex: 1; overflow-y: auto; padding: 10px; user-select: text; }
-  .composer { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-  textarea, input[type=number] {
+  .btn { border-color: var(--border); background: var(--surface); padding: 5px 11px; }
+  .icon-btn:hover, .btn:hover { background: var(--hover); }
+  .icon-btn.active { color: var(--accent); background: var(--hover); }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-fg);
+    border-color: transparent; font-weight: 500;
+  }
+  .btn-primary:hover { background: var(--accent); opacity: .88; }
+  .btn-danger { color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; border-color: transparent; }
+
+  main { flex: 1; overflow-y: auto; padding: 12px; user-select: text; }
+  main::-webkit-scrollbar { width: 6px; }
+  main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  main::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  .composer { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  textarea, input[type=number], input[type=text] {
     width: 100%; background: var(--surface); color: var(--text);
     border: 1px solid var(--border); border-radius: 8px;
     padding: 8px 10px; font: inherit; outline: none;
-    transition: border-color .15s;
+    transition: border-color .15s, box-shadow .15s;
   }
-  textarea { min-height: 56px; resize: vertical; }
-  textarea:focus, input[type=number]:focus { border-color: var(--accent); }
+  textarea { min-height: 60px; resize: vertical; }
+  textarea:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+  .composer-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .composer-row input[type=text] { flex: 1; min-width: 120px; padding: 5px 9px; font-size: 12px; }
+  .swatches { display: flex; gap: 5px; }
+  .swatch {
+    width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform .1s;
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch.sel { border-color: var(--text); }
+  .swatch[data-c=""] { background: var(--surface); border-color: var(--border); }
+  .swatch[data-c="yellow"] { background: var(--c-yellow); }
+  .swatch[data-c="pink"]   { background: var(--c-pink); }
+  .swatch[data-c="blue"]   { background: var(--c-blue); }
+  .swatch[data-c="green"]  { background: var(--c-green); }
+
+  .filter-bar {
+    display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .chip {
+    -webkit-app-region: no-drag;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px 10px; font-size: 11px;
+    cursor: pointer; color: var(--muted);
+    transition: color .12s, background .12s, border-color .12s;
+  }
+  .chip:hover { color: var(--text); }
+  .chip.on { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+
+  .view-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; margin-bottom: 10px;
+    font-size: 11px; color: var(--muted);
+  }
+
   .note {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
-    box-shadow: var(--shadow);
-    display: flex; flex-direction: column; gap: 4px;
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 5px;
+    transition: box-shadow .15s, transform .1s;
   }
+  .note:hover { box-shadow: var(--shadow); }
+  .note[data-c="yellow"] { background: var(--c-yellow); }
+  .note[data-c="pink"]   { background: var(--c-pink); }
+  .note[data-c="blue"]   { background: var(--c-blue); }
+  .note[data-c="green"]  { background: var(--c-green); }
+  .note.archived, .note.deleted { opacity: .8; }
   .note .text { white-space: pre-wrap; word-break: break-word; user-select: text; }
+  .note .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .note .tag {
+    font-size: 10px; padding: 1px 7px; border-radius: 999px;
+    background: rgba(0,0,0,.06); color: var(--text);
+  }
+  html.dark .note .tag { background: rgba(255,255,255,.12); }
   .note .meta {
     display: flex; align-items: center; justify-content: space-between;
-    color: var(--muted); font-size: 11px;
+    color: var(--muted); font-size: 11px; gap: 6px;
   }
-  .note .actions { display: flex; gap: 2px; }
+  .note .meta .times { display: flex; flex-direction: column; line-height: 1.35; }
+  .note .actions { display: flex; gap: 1px; align-items: center; flex-shrink: 0; }
   .note .actions button {
     background: transparent; border: none; color: var(--muted);
-    cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 11px;
+    cursor: pointer; padding: 3px 7px; border-radius: 5px; font-size: 11px;
+    transition: color .12s, background .12s;
   }
-  .note .actions button:hover { color: var(--text); background: var(--bg); }
+  .note .actions button:hover { color: var(--text); background: var(--hover); }
+  .note .actions .done-btn { color: #16a34a; }
+  .note .actions .danger-btn:hover { color: var(--danger); }
   .note textarea { min-height: 64px; margin-top: 4px; }
+  .empty {
+    text-align: center; color: var(--muted); font-size: 12px;
+    padding: 50px 0; line-height: 1.6;
+  }
+  .empty .big { font-size: 28px; opacity: .35; margin-bottom: 8px; }
 
   .settings {
     position: absolute; inset: 0; background: var(--bg);
@@ -76,10 +159,12 @@
   }
   .settings.open { display: flex; }
   .settings header { -webkit-app-region: drag; }
-  .settings-body { flex: 1; overflow-y: auto; padding: 12px; user-select: text; }
+  .settings-body { flex: 1; overflow-y: auto; padding: 14px; user-select: text; }
+  .settings-body::-webkit-scrollbar { width: 6px; }
+  .settings-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   .row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 0; border-bottom: 1px solid var(--border); gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--border); gap: 10px;
   }
   .row:last-child { border-bottom: none; }
   .row .label { font-size: 12px; }
@@ -98,11 +183,10 @@
   .switch.on { background: var(--accent); }
   .switch.on::after { transform: translateX(14px); }
   .section-title {
-    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
-    color: var(--muted); margin: 14px 0 4px; font-weight: 600;
+    font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin: 16px 0 4px; font-weight: 600;
   }
   .section-title:first-child { margin-top: 0; }
-
   .size-inputs { display: flex; gap: 6px; align-items: center; }
   .size-inputs input { width: 64px; padding: 4px 6px; text-align: center; }
   .size-inputs span { color: var(--muted); font-size: 11px; }
@@ -110,8 +194,8 @@
   .dropdown { position: relative; }
   .dd-trigger {
     background: var(--surface); color: var(--text);
-    border: 1px solid var(--border); border-radius: 7px;
-    padding: 5px 28px 5px 10px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 26px 5px 10px; font-size: 12px; cursor: pointer;
     min-width: 110px; text-align: left; position: relative;
   }
   .dd-trigger::after {
@@ -124,13 +208,11 @@
     position: absolute; right: 0; top: calc(100% + 4px);
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 7px; box-shadow: var(--shadow);
-    min-width: 140px; z-index: 20; display: none; overflow: hidden;
+    min-width: 160px; z-index: 20; display: none; overflow: hidden;
   }
   .dropdown.open .dd-menu { display: block; }
-  .dd-item {
-    padding: 7px 12px; font-size: 12px; cursor: pointer;
-  }
-  .dd-item:hover { background: var(--bg); }
+  .dd-item { padding: 7px 12px; font-size: 12px; cursor: pointer; }
+  .dd-item:hover { background: var(--hover); }
   .dd-item.active { color: var(--accent); }
 </style>
 </head>
@@ -138,14 +220,32 @@
   <div id="app">
     <header>
       <button class="icon-btn" id="theme-btn" title="切换主题">🌙</button>
+      <button class="icon-btn" id="archive-btn" title="归档">📥</button>
+      <button class="icon-btn" id="trash-btn" title="回收站">🗑</button>
       <button class="icon-btn" id="settings-btn" title="设置">⚙</button>
+      <span class="title" id="view-title">便签</span>
       <div class="spacer"></div>
       <button class="btn btn-primary" id="add-btn">添加</button>
     </header>
     <main>
-      <div class="composer">
+      <div class="composer" id="composer-wrap">
         <textarea id="composer" placeholder="今日计划、目标、灵感…  Ctrl+Enter 添加"></textarea>
+        <div class="composer-row">
+          <input type="text" id="composer-tags" placeholder="标签，用逗号分隔（如：工作, 待办）" />
+          <div class="swatches" id="composer-swatches">
+            <div class="swatch sel" data-c="" title="无色"></div>
+            <div class="swatch" data-c="yellow" title="黄"></div>
+            <div class="swatch" data-c="pink" title="粉"></div>
+            <div class="swatch" data-c="blue" title="蓝"></div>
+            <div class="swatch" data-c="green" title="绿"></div>
+          </div>
+        </div>
       </div>
+      <div class="view-banner" id="view-banner" style="display:none">
+        <span id="view-banner-text"></span>
+        <button class="btn btn-danger" id="empty-trash" style="display:none">清空回收站</button>
+      </div>
+      <div class="filter-bar" id="filter-bar"></div>
       <div id="list"></div>
     </main>
   </div>
@@ -187,6 +287,10 @@
           </div>
         </div>
       </div>
+      <div class="row">
+        <div class="left"><div class="label">开机自启</div><div class="sub">随系统启动时打开</div></div>
+        <div class="switch" id="sw-autostart"></div>
+      </div>
 
       <div class="section-title">存储</div>
       <div class="row">
@@ -206,31 +310,113 @@
 const invoke = window.__TAURI__.invoke;
 let notes = [];
 let cfg = null;
+let composerColor = "";
+let activeTag = "";
+let view = "active"; // "active" | "archived" | "trash"
 
 const $ = (s) => document.querySelector(s);
 const list = $('#list');
 const composer = $('#composer');
+const composerTags = $('#composer-tags');
 
 function fmt(t) {
   const d = new Date(t);
-  const pad = (n) => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const p = (n) => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function parseTags(s) {
+  return (s || '').split(/[,，]/).map(t => t.trim()).filter(Boolean);
+}
+function noteState(n) {
+  if (n.deleted) return 'trash';
+  if (n.archived) return 'archived';
+  return 'active';
+}
+function visibleNotes() { return notes.filter(n => noteState(n) === view); }
+
+function allTags() {
+  const set = new Set();
+  for (const n of visibleNotes()) (n.tags || []).forEach(t => set.add(t));
+  return [...set].sort();
+}
+
+function renderFilter() {
+  const bar = $('#filter-bar');
+  const tags = allTags();
+  if (!tags.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = '';
+  const mk = (label, val) => {
+    const c = document.createElement('div');
+    c.className = 'chip' + (activeTag === val ? ' on' : '');
+    c.textContent = label;
+    c.onclick = () => { activeTag = val; render(); };
+    return c;
+  };
+  bar.appendChild(mk('全部', ''));
+  tags.forEach(t => bar.appendChild(mk('#' + t, t)));
+}
+
+function renderBanner() {
+  const banner = $('#view-banner');
+  const txt = $('#view-banner-text');
+  const empty = $('#empty-trash');
+  if (view === 'active') { banner.style.display = 'none'; return; }
+  banner.style.display = 'flex';
+  if (view === 'archived') { txt.textContent = '已归档（已完成的便签）'; empty.style.display = 'none'; }
+  else if (view === 'trash') { txt.textContent = '回收站（删除可恢复）'; empty.style.display = ''; }
 }
 
 function render() {
+  $('#view-title').textContent = view === 'active' ? '便签' : view === 'archived' ? '归档' : '回收站';
+  $('#composer-wrap').style.display = view === 'active' ? '' : 'none';
+  $('#add-btn').style.display = view === 'active' ? '' : 'none';
+  $('#archive-btn').classList.toggle('active', view === 'archived');
+  $('#trash-btn').classList.toggle('active', view === 'trash');
+  renderBanner();
+  renderFilter();
   list.innerHTML = '';
-  for (const n of [...notes].reverse()) {
+  const filtered = visibleNotes().filter(n =>
+    !activeTag || (n.tags || []).includes(activeTag));
+  if (!filtered.length) {
+    const e = document.createElement('div');
+    e.className = 'empty';
+    const icon = view === 'trash' ? '🗑' : view === 'archived' ? '📥' : '📝';
+    const msg = view === 'trash' ? '回收站为空' : view === 'archived' ? '归档为空' : '暂无便签，写点什么吧';
+    e.innerHTML = `<div class="big">${icon}</div><div>${msg}</div>`;
+    list.appendChild(e);
+    return;
+  }
+  for (const n of [...filtered].reverse()) {
     const el = document.createElement('div');
-    el.className = 'note';
+    el.className = 'note' + (n.archived ? ' archived' : '') + (n.deleted ? ' deleted' : '');
     el.dataset.id = n.id;
+    if (n.color) el.dataset.c = n.color;
+    const tagsHtml = (n.tags || []).map(t =>
+      `<span class="tag">#${t.replace(/</g,'&lt;')}</span>`).join('');
+    const created = fmt(n.createdAt);
+    const updated = n.updatedAt && n.updatedAt !== n.createdAt ? fmt(n.updatedAt) : null;
+    const timeHtml = updated
+      ? `<span>创建 ${created}</span><span>修改 ${updated}</span>`
+      : `<span>${created}</span>`;
+    let actionHtml;
+    if (view === 'trash') {
+      actionHtml = `<button data-act="restore" title="恢复">↩ 恢复</button>
+                    <button class="danger-btn" data-act="purge" title="彻底删除">✕</button>`;
+    } else if (view === 'archived') {
+      actionHtml = `<button data-act="unarchive" title="取消归档">↩</button>
+                    <button class="danger-btn" data-act="del" title="移到回收站">删除</button>`;
+    } else {
+      actionHtml = `<button class="done-btn" data-act="done" title="完成并归档">✓</button>
+                    <button data-act="edit">编辑</button>
+                    <button class="danger-btn" data-act="del">删除</button>`;
+    }
     el.innerHTML = `
       <div class="text"></div>
+      ${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ''}
       <div class="meta">
-        <span>${fmt(n.updatedAt || n.createdAt)}</span>
-        <div class="actions">
-          <button data-act="edit">编辑</button>
-          <button data-act="del">删除</button>
-        </div>
+        <div class="times">${timeHtml}</div>
+        <div class="actions">${actionHtml}</div>
       </div>`;
     el.querySelector('.text').textContent = n.text;
     list.appendChild(el);
@@ -242,38 +428,83 @@ async function persist() { try { await invoke('save_notes', { notes }); } catch(
 async function add() {
   const t = composer.value.trim();
   if (!t) return;
-  notes.push({ id: Date.now()+'-'+Math.random().toString(36).slice(2,7), text: t, createdAt: Date.now(), updatedAt: Date.now() });
-  composer.value = '';
+  const now = Date.now();
+  notes.push({
+    id: now+'-'+Math.random().toString(36).slice(2,7),
+    text: t,
+    tags: parseTags(composerTags.value),
+    color: composerColor,
+    archived: false, deleted: false,
+    createdAt: now, updatedAt: now,
+  });
+  composer.value = ''; composerTags.value = '';
   render(); await persist();
 }
 
+$('#composer-swatches').addEventListener('click', (e) => {
+  const sw = e.target.closest('.swatch'); if (!sw) return;
+  composerColor = sw.dataset.c;
+  $('#composer-swatches').querySelectorAll('.swatch').forEach(s =>
+    s.classList.toggle('sel', s.dataset.c === composerColor));
+});
+
 list.addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-act]');
-  if (!btn) return;
-  const row = e.target.closest('.note');
+  const sw = e.target.closest('.swatch[data-edit-c]');
+  const row = e.target.closest('.note'); if (!row) return;
   const id = row.dataset.id;
   const i = notes.findIndex(n => n.id === id);
   if (i < 0) return;
-  if (btn.dataset.act === 'del') {
+
+  if (sw) {
+    notes[i].color = sw.dataset.editC;
+    notes[i].updatedAt = Date.now();
+    render(); await persist(); return;
+  }
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const now = Date.now();
+  if (act === 'del') {
+    notes[i].deleted = true; notes[i].deletedAt = now; notes[i].updatedAt = now;
+    render(); await persist();
+  } else if (act === 'purge') {
+    if (!confirm('彻底删除此便签？此操作无法撤销。')) return;
     notes.splice(i, 1); render(); await persist();
-  } else if (btn.dataset.act === 'edit') {
+  } else if (act === 'done') {
+    notes[i].archived = true; notes[i].updatedAt = now;
+    render(); await persist();
+  } else if (act === 'unarchive') {
+    notes[i].archived = false; notes[i].updatedAt = now;
+    render(); await persist();
+  } else if (act === 'restore') {
+    notes[i].deleted = false; notes[i].deletedAt = null; notes[i].updatedAt = now;
+    render(); await persist();
+  } else if (act === 'edit') {
     const n = notes[i];
+    const swHtml = ['','yellow','pink','blue','green'].map(c =>
+      `<div class="swatch ${(n.color||'')===c?'sel':''}" data-edit-c="${c}"></div>`).join('');
     row.innerHTML = `
       <textarea class="edit"></textarea>
+      <input type="text" class="edit-tags" placeholder="标签，用逗号分隔" />
       <div class="meta">
-        <span>${fmt(n.createdAt)}</span>
+        <div class="swatches">${swHtml}</div>
         <div class="actions">
           <button data-act="save">保存</button>
           <button data-act="cancel">取消</button>
         </div>
       </div>`;
     const ta = row.querySelector('.edit');
-    ta.value = n.text; ta.focus();
-  } else if (btn.dataset.act === 'save') {
+    ta.value = n.text;
+    row.querySelector('.edit-tags').value = (n.tags || []).join(', ');
+    ta.focus();
+  } else if (act === 'save') {
     const v = row.querySelector('.edit').value.trim();
-    if (v) { notes[i].text = v; notes[i].updatedAt = Date.now(); }
+    const tg = parseTags(row.querySelector('.edit-tags').value);
+    if (v) {
+      notes[i].text = v; notes[i].tags = tg; notes[i].updatedAt = now;
+    }
     render(); await persist();
-  } else if (btn.dataset.act === 'cancel') {
+  } else if (act === 'cancel') {
     render();
   }
 });
@@ -282,6 +513,17 @@ $('#add-btn').onclick = add;
 composer.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); add(); }
 });
+
+function setView(v) { view = v; activeTag = ''; render(); }
+$('#archive-btn').onclick = () => setView(view === 'archived' ? 'active' : 'archived');
+$('#trash-btn').onclick = () => setView(view === 'trash' ? 'active' : 'trash');
+$('#empty-trash').onclick = async () => {
+  const n = notes.filter(x => x.deleted).length;
+  if (!n) return;
+  if (!confirm(`清空回收站中的 ${n} 条便签？此操作无法撤销。`)) return;
+  notes = notes.filter(x => !x.deleted);
+  render(); await persist();
+};
 
 function applyTheme(t) {
   document.documentElement.classList.toggle('dark', t === 'dark');
@@ -304,6 +546,12 @@ $('#sw-pin').onclick = async () => {
   cfg.always_on_top = await invoke('set_pin', { value: !cfg.always_on_top });
   setSwitch($('#sw-pin'), cfg.always_on_top);
 };
+$('#sw-autostart').onclick = async () => {
+  try {
+    cfg.autostart = await invoke('set_autostart', { enable: !cfg.autostart });
+    setSwitch($('#sw-autostart'), cfg.autostart);
+  } catch(e){ alert('设置失败: '+e); }
+};
 
 $('#pick-dir').onclick = async () => {
   const p = await invoke('pick_storage_dir');
@@ -314,14 +562,12 @@ $('#export-btn').onclick = async () => { const p = await invoke('export_notes');
 $('#import-merge').onclick = async () => { try { notes = await invoke('import_notes', { mode: 'merge' }); render(); } catch(e){} };
 $('#import-replace').onclick = async () => { try { notes = await invoke('import_notes', { mode: 'replace' }); render(); } catch(e){} };
 
-// Window size apply
 $('#apply-size').onclick = async () => {
   const w = parseFloat($('#win-w').value), h = parseFloat($('#win-h').value);
   if (!Number.isFinite(w) || !Number.isFinite(h)) return;
   try { await invoke('set_window_size', { width: w, height: h }); } catch(e){ alert('失败: '+e); }
 };
 
-// Close-action dropdown
 const closeLabels = { minimize: '最小化', close: '关闭程序' };
 const dd = $('#dd-close');
 function setCloseAction(val) {
@@ -339,7 +585,6 @@ dd.querySelectorAll('.dd-item').forEach(it => {
 });
 document.addEventListener('click', () => dd.classList.remove('open'));
 
-// Persist window bounds (debounced)
 let boundsTimer;
 window.addEventListener('resize', () => {
   clearTimeout(boundsTimer);
@@ -355,11 +600,18 @@ window.addEventListener('resize', () => {
   cfg = await invoke('get_config');
   applyTheme(cfg.theme);
   setSwitch($('#sw-pin'), cfg.always_on_top);
+  setSwitch($('#sw-autostart'), !!cfg.autostart);
   $('#storage-path').textContent = cfg.storage_dir;
   $('#win-w').value = Math.round(cfg.bounds.width);
   $('#win-h').value = Math.round(cfg.bounds.height);
   setCloseAction(cfg.close_action || 'minimize');
   notes = await invoke('get_notes');
+  for (const n of notes) {
+    if (n.tags === undefined) n.tags = [];
+    if (n.color === undefined) n.color = '';
+    if (n.archived === undefined) n.archived = false;
+    if (n.deleted === undefined) n.deleted = false;
+  }
   render();
 })();
 </script>
