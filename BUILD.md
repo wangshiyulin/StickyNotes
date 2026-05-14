@@ -15,4 +15,4 @@ cargo xwin build --release --target x86_64-pc-windows-msvc
 产物：`src-tauri/target/<target>/release/stickynotes(.exe)`
 
 ## 修改前端
-直接编辑 `dist/index.html`（单文件，原生 HTML/CSS/JS），无需打包步骤。
+直接编辑 `dist/index.html`（单文件，原生 HTML/CSS/JS），无需打包步骤
